@@ -95,7 +95,7 @@ TEMPLATE_END = """
 <textarea data-lang="%(language)s" id="%(divid)s_editor" %(autorun)s
     %(hidecode)s %(include)s %(timelimit)s %(coach)s %(codelens)s %(enabledownload)s %(chatcodes)s %(optional)s
     data-audio='%(ctext)s' %(sourcefile)s %(datafile)s %(stdin)s %(tie)s %(dburl)s %(nopair)s
-    %(cargs)s %(largs)s %(rargs)s %(iargs)s %(gradebutton)s %(caption)s %(hidehistory)s %(wasmuri)s
+    %(cargs)s %(largs)s %(rargs)s %(iargs)s %(compargs)s %(gradebutton)s %(caption)s %(hidehistory)s %(wasmuri)s
     %(showlastsql)s style="visibility: hidden;">
 %(initialcode)s
 </textarea>
@@ -249,6 +249,7 @@ class ActiveCode(RunestoneIdDirective):
             "nopair": directives.flag,
             "dburl": directives.unchanged,
             "showlastsql": directives.flag,
+            "compiler": directives.unchanged,  
         }
     )
 
@@ -396,6 +397,7 @@ class ActiveCode(RunestoneIdDirective):
             ("linkargs", "largs"),
             ("runargs", "rargs"),
             ("interpreterargs", "iargs"),
+            ("compiler", "compargs"),
         ]:
             if opt in self.options:
                 self.options[tp] = 'data-{}="{}"'.format(opt, escape(self.options[opt]))

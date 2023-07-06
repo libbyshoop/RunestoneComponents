@@ -181,6 +181,8 @@ export class ActiveCode extends RunestoneBase {
             edmode = "python";
         } else if (edmode === "octave" || edmode === "MATLAB") {
             edmode = "text/x-octave";
+        } else if (edmode === "pdc") {
+            edmode = "text/x-c++src";
         }
         var editor = CodeMirror(codeDiv, {
             value: this.code,

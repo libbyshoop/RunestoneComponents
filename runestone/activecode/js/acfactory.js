@@ -57,7 +57,7 @@ export default class ACFactory {
             } else if (lang === "sql") {
                 return new SQLActiveCode(opts);
             } else if (
-                ["java", "cpp", "c", "python3", "python2", "octave"].indexOf(
+                ["java", "cpp", "c", "python3", "python2", "octave", "pdc"].indexOf(
                     lang
                 ) > -1
             ) {

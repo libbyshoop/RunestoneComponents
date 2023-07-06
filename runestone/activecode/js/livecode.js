@@ -14,6 +14,7 @@ export default class LiveCode extends ActiveCode {
         this.linkargs = unescapeHtml($(orig).data("linkargs"));
         this.runargs = unescapeHtml($(orig).data("runargs"));
         this.interpreterargs = unescapeHtml($(orig).data("interpreterargs"));
+        this.compiler = unescapeHtml($(orig).data("compiler"));
         this.API_KEY = "67033pV7eUUvqo07OJDIV8UZ049aLEK1";
         this.USE_API_KEY = true;
         this.JOBE_SERVER = eBookConfig.jobehost || eBookConfig.host;
@@ -26,6 +27,12 @@ export default class LiveCode extends ActiveCode {
         this.div2id = {};
         if (this.stdin) {
             this.createInputElement();
+        }
+        if (this.runargs) {
+            this.createCmdArgsElement();
+        }
+        if (this.interpreterargs && this.language == "pdc") {
+            this.createInterpreterArgsElement();
         }
         this.createErrorOutput();
     }
@@ -42,6 +49,34 @@ export default class LiveCode extends ActiveCode {
         this.outerDiv.appendChild(label);
         this.outerDiv.appendChild(input);
         this.stdin_el = input;
+    }
+    createCmdArgsElement() {
+        // PDC add
+        var rlabel = document.createElement("label");
+        rlabel.for = this.divid + "_runargs";
+        $(rlabel).text($.i18n("msg_activecode_runargs"));
+        var rinput = document.createElement("input");
+        rinput.id = this.divid + "_runargs";
+        rinput.type = "text";
+        rinput.size = "35";
+        rinput.value = this.runargs;
+        this.outerDiv.appendChild(rlabel);
+        this.outerDiv.appendChild(rinput);
+        this.runargs_el = rinput;
+    }
+    createInterpreterArgsElement() {
+        // PDC add 
+        var rlabel = document.createElement("label");
+        rlabel.for = this.divid + "_interpreterargs";
+        $(rlabel).text($.i18n("msg_activecode_interpreterargs"));
+        var rinput = document.createElement("input");
+        rinput.id = this.divid + "_interpreterargs";
+        rinput.type = "text";
+        rinput.size = "35";
+        rinput.value = this.interpreterargs;
+        this.outerDiv.appendChild(rlabel);
+        this.outerDiv.appendChild(rinput);
+        this.interpreterargs_el = rinput;
     }
     createErrorOutput() {}
 
@@ -95,6 +130,18 @@ export default class LiveCode extends ActiveCode {
             python2: "test.py",
             octave: "octatest.m",
         };
+        // PDC change 
+        var pdcsfilemap = {
+            'g++': "test.cpp",
+            gcc: "test.c",
+            mpicc: "test.c",
+            'mpic++': "test.cpp",
+            pgcc: "test.c",
+            'pgc++': "test.cpp",
+            nvcc: "test.cu",
+            pgcc: "test.c",
+        };
+        // end PDC change
         var sourcefilename = "";
         var testdrivername = "";
         var file_checkp;
@@ -148,7 +195,16 @@ export default class LiveCode extends ActiveCode {
             "runargs",
             "interpreterargs",
             "memorylimit",
+            "compiler",
         ];
+        // PDC addition
+        if (this.runargs) {
+            this.runargs = $(this.runargs_el).val();
+        }
+        if (this.interpreterargs) {
+            this.interpreterargs = $(this.interpreterargs_el).val();
+        }
+        // end PDC addition
         var paramobj = {};
         for (let param of paramlist) {
             if (this[param]) {
@@ -158,12 +214,18 @@ export default class LiveCode extends ActiveCode {
         if (this.language === "octave") {
             paramobj.memorylimit = 200000;
         }
-
+        
         if (this.stdin) {
             stdin = $(this.stdin_el).val();
         }
+
         if (!this.sourcefile) {
-            this.sourcefile = sfilemap[this.language];
+            //PDC change
+            if (this.language === "pdc") {
+                this.sourcefile = pdcsfilemap[this.compiler];
+            } else {
+                this.sourcefile = sfilemap[this.language];
+            }
         }
 
         $(this.output).html($.i18n("msg_activecode_compiling_running"));
