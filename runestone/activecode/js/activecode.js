@@ -30,6 +30,7 @@ import "codemirror/addon/hint/anyword-hint.js";
 import "codemirror/addon/edit/matchbrackets.js";
 import "./skulpt.min.js";
 import "./skulpt-stdlib.js";
+import PyflakesCoach from "./coach-python-pyflakes.js";
 // Used by Skulpt.
 import embed from "vega-embed";
 // Adapt for use outside webpack -- see https://github.com/vega/vega-embed.
@@ -63,9 +64,9 @@ export class ActiveCode extends RunestoneBase {
         this.containerDiv = opts.orig;
         this.useRunestoneServices = opts.useRunestoneServices;
         this.python3 = true;
-        this.alignVertical = opts.vertical;
         this.origElem = orig;
         this.origText = this.origElem.textContent;
+        this.codeCoachList = [];    //list of CodeCoaches that will be used to provide feedback
         this.divid = opts.orig.id;
         this.code = $(orig).text() || "\n\n\n\n\n";
         this.language = $(orig).data("lang");
@@ -93,7 +94,7 @@ export class ActiveCode extends RunestoneBase {
         }
         this.output = null; // create pre for output
         this.graphics = null; // create div for turtle graphics
-        this.codecoach = null;
+        this.codecoach = null; // div for Code Coaches
         this.codelens = null;
         this.controlDiv = null;
         this.historyScrubber = null;
@@ -138,6 +139,12 @@ export class ActiveCode extends RunestoneBase {
             this.caption = "ActiveCode";
         }
         this.addCaption("runestone");
+
+        //Setup CodeCoaches - add based on language
+        if (this.language == "python" || this.language == "python3") {
+            this.codeCoachList.push(new PyflakesCoach());
+        }
+
         setTimeout(
             function () {
                 this.editor.refresh();
@@ -159,7 +166,7 @@ export class ActiveCode extends RunestoneBase {
         var linkdiv = document.createElement("div");
         linkdiv.id = this.divid.replace(/_/g, "-").toLowerCase(); // :ref: changes _ to - so add this as a target
         var codeDiv = document.createElement("div");
-        $(codeDiv).addClass("ac_code_div col-md-12");
+        $(codeDiv).addClass("ac_code_div");
         this.codeDiv = codeDiv;
         this.outerDiv.lang = this.language;
         $(this.origElem).replaceWith(this.outerDiv);
@@ -277,6 +284,7 @@ export class ActiveCode extends RunestoneBase {
         if (this.logResults) {
             this.logCurrentAnswer();
         }
+        this.runCoaches();
         this.renderFeedback();
         // The run is finished; re-enable the button.
         this.runButton.disabled = false;
@@ -288,7 +296,6 @@ export class ActiveCode extends RunestoneBase {
         var ctrlDiv = document.createElement("div");
         var butt;
         $(ctrlDiv).addClass("ac_actions");
-        $(ctrlDiv).addClass("col-md-12");
         // Run
         butt = document.createElement("button");
         $(butt).text($.i18n("msg_activecode_run_code"));
@@ -705,7 +712,7 @@ export class ActiveCode extends RunestoneBase {
         // to hold turtle graphics output.  We use a div in case the turtle changes from
         // using a canvas to using some other element like svg in the future.
         var outDiv = document.createElement("div");
-        $(outDiv).addClass("ac_output col-md-12");
+        $(outDiv).addClass("ac_output");
         this.outDiv = outDiv;
         this.output = document.createElement("pre");
         this.output.id = this.divid + "_stdout";
@@ -725,26 +732,24 @@ export class ActiveCode extends RunestoneBase {
                 $(this.graphics).addClass("visible-ac-canvas");
             }.bind(this)
         );
-        var clearDiv = document.createElement("div");
-        $(clearDiv).css("clear", "both"); // needed to make parent div resize properly
-        this.outerDiv.appendChild(clearDiv);
+
+        var coachDiv = document.createElement("div");
+        coachDiv.classList.add("alert", "alert-warning", "codecoach");
+        $(coachDiv).css("display", "none");
+        let coachHead = coachDiv.appendChild(document.createElement("h3"));
+        coachHead.textContent = $.i18n("msg_activecode_code_coach");
+        this.outerDiv.appendChild(coachDiv);
+        this.codecoach = coachDiv;
+
         outDiv.appendChild(this.output);
         outDiv.appendChild(this.graphics);
         this.outerDiv.appendChild(outDiv);
         var lensDiv = document.createElement("div");
+        lensDiv.classList.add("codelens");
         lensDiv.id = `${this.divid}_codelens`;
-        $(lensDiv).addClass("col-md-12");
         $(lensDiv).css("display", "none");
         this.codelens = lensDiv;
         this.outerDiv.appendChild(lensDiv);
-        var coachDiv = document.createElement("div");
-        $(coachDiv).addClass("col-md-12");
-        $(coachDiv).css("display", "none");
-        this.codecoach = coachDiv;
-        this.outerDiv.appendChild(coachDiv);
-        clearDiv = document.createElement("div");
-        $(clearDiv).css("clear", "both"); // needed to make parent div resize properly
-        this.outerDiv.appendChild(clearDiv);
     }
 
     disableSaveLoad() {
@@ -909,38 +914,6 @@ export class ActiveCode extends RunestoneBase {
         this.codelens.appendChild(myIframe);
         this.logBookEvent({
             event: "codelens",
-            act: "view",
-            div_id: this.divid,
-        });
-    }
-    // <iframe id="%(divid)s_codelens" width="800" height="500" style="display:block"src="#">
-    // </iframe>
-    showCodeCoach() {
-        var myIframe;
-        var srcURL;
-        var cl;
-        var div_id = this.divid;
-        if (this.codecoach === null) {
-            this.codecoach = document.createElement("div");
-            this.codecoach.style.display = "block";
-        }
-        cl = this.codecoach.firstChild;
-        if (cl) {
-            this.codecoach.removeChild(cl);
-        }
-        srcURL = eBookConfig.app + "/admin/diffviewer?divid=" + div_id;
-        myIframe = document.createElement("iframe");
-        myIframe.setAttribute("id", div_id + "_coach");
-        myIframe.setAttribute("width", "100%");
-        myIframe.setAttribute("height", "500px");
-        myIframe.setAttribute("style", "display:block");
-        myIframe.style.background = "#fff";
-        myIframe.style.width = "100%";
-        myIframe.src = srcURL;
-        this.codecoach.appendChild(myIframe);
-        $(this.codecoach).show();
-        this.logBookEvent({
-            event: "coach",
             act: "view",
             div_id: this.divid,
         });
@@ -1256,6 +1229,35 @@ Yet another is that there is an internal error.  The internal error message is: 
         }
     }
 
+    async runCoaches() {
+        //Run all available code coaches and update code coach div
+
+        //clear anything after header in codecoach div and hide it
+        $(this.codecoach).children().slice(1).remove();
+        $(this.codecoach).css("display", "none");
+
+        //get code, run coaches
+        let code = await this.buildProg(false);
+        let results = [];
+        for(let coach of this.codeCoachList) {
+            results.push(coach.check(code));
+        }
+
+        //once all coaches are done, update div
+        Promise.allSettled(results).then((promises) => {
+            for(let p of promises) {
+                if(p.status === 'fulfilled' && p.value !== null && p.value.trim() !== "") {
+                    let checkDiv = document.createElement("div");
+                    checkDiv.classList.add("python_check_results");
+                    let checkPre = checkDiv.appendChild(document.createElement("pre"));
+                    checkPre.textContent = p.value;
+                    this.codecoach.append(checkDiv);
+                    $(this.codecoach).css("display", "block");
+                }
+            }
+        });
+    }
+
     renderFeedback() {
         // The python unit test code builds the table as it is running the tests
         // In "normal" usage this is displayed immediately.
@@ -1330,6 +1332,7 @@ Yet another is that there is an internal error.  The internal error message is: 
         var prog = await this.buildProg(true);
         this.saveCode = "True";
         $(this.output).text("");
+
         while ($(`#${this.divid}_errinfo`).length > 0) {
             $(`#${this.divid}_errinfo`).remove();
         }
