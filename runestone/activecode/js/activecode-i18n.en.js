@@ -116,6 +116,7 @@ $.i18n().load({
         msg_activecode_load_db: "Loading DB...",
         msg_activecode_runargs: "Command line arguments for running",
         msg_activecode_interpreterargs: "Flags for mpirun",
+        msg_activecode_compileargs: "Compiler flags",
         msg_activecode_code_coach: "Code Coach",
     },
 });

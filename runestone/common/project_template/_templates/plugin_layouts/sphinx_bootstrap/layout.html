@@ -47,7 +47,8 @@
         {% if minimal_outside_links != 'True' %}
           <a class="brand-logo" href="/{{appname}}/default/user/login" aria-label="Login"><img src="{{pathto(logo, 1)}}" alt=""></a>
         {% else %}
-          <div class="brand-logo"><img src="{{pathto(logo, 1)}}" alt=""></div>
+          <!-- <div class="brand-logo" ><img src="{{pathto(logo, 1)}}" alt=""></div> -->
+          <a class="brand-logo" href="https://learnpdc.org"><img src="{{pathto(logo, 1)}}" alt=""></a>
         {% endif %}
         <a class="navbar-brand" href="{{ pathto(master_doc) }}" aria-label="index-page">
           {% if dynamic_pages == 'True' %}
@@ -67,7 +68,7 @@
       <ul class="nav navbar-nav navbar-right" >
 
         <li class="divider-vertical"></li>
-        <li><span id="ad_warning"></span></li>
+        <!-- <li><span id="ad_warning"></span></li>-->
         <li><span id="browsing_warning"></span></li>
 
         <!-- social media dropdown -->

@@ -25,15 +25,26 @@ export default class LiveCode extends ActiveCode {
             eBookConfig.proxyuri_files || "/runestone/proxy/jobeCheckFile/";
         // TODO:  should add a proper put/check in pavement.tmpl as this is misleading and will break on runestone
         this.div2id = {};
+        // PDC addition (though perhaps good for C in general)
+        if (this.compiler == "include" && this.language == "pdc") {
+            this.disableInteraction;
+            this.runButton.disabled = true;
+        }
+        // end PDC addition
         if (this.stdin) {
             this.createInputElement();
         }
+        // PDC additions
         if (this.runargs) {
             this.createCmdArgsElement();
         }
         if (this.interpreterargs && this.language == "pdc") {
             this.createInterpreterArgsElement();
         }
+        if (this.compileargs && this.language == "pdc") {
+            this.createCompileArgsElement();
+        }
+        // end PDC additions
         this.createErrorOutput();
     }
     outputfun(a) {}
@@ -77,6 +88,20 @@ export default class LiveCode extends ActiveCode {
         this.outerDiv.appendChild(rlabel);
         this.outerDiv.appendChild(rinput);
         this.interpreterargs_el = rinput;
+    }
+    createCompileArgsElement() {
+        // PDC add 
+        var rlabel = document.createElement("label");
+        rlabel.for = this.divid + "_compileargs";
+        $(rlabel).text($.i18n("msg_activecode_compileargs"));
+        var rinput = document.createElement("input");
+        rinput.id = this.divid + "_compileargs";
+        rinput.type = "text";
+        rinput.size = "35";
+        rinput.value = this.compileargs;
+        this.outerDiv.appendChild(rlabel);
+        this.outerDiv.appendChild(rinput);
+        this.compileargs_el = rinput;
     }
     createErrorOutput() {}
 
@@ -140,6 +165,7 @@ export default class LiveCode extends ActiveCode {
             'pgc++': "test.cpp",
             nvcc: "test.cu",
             pgcc: "test.c",
+            chpl: "test.chpl",
         };
         // end PDC change
         var sourcefilename = "";
@@ -203,6 +229,9 @@ export default class LiveCode extends ActiveCode {
         }
         if (this.interpreterargs) {
             this.interpreterargs = $(this.interpreterargs_el).val();
+        }
+        if (this.compileargs) {
+            this.compileargs = $(this.compileargs_el).val();
         }
         // end PDC addition
         var paramobj = {};
